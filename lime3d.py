@@ -36,7 +36,7 @@ for _ in range(num_matrix):
     all_matrixs.append(pert_matrixs)
 
 raw_frames, width, height, real_width, real_height = preprocess_video(video_path)
-preds = []
+
 desired_action_scores = []
 for asd, pert in tqdm(enumerate(all_matrixs)):
     pert_frames = perturbe_frame(raw_frames, pert, cols, rows, width, height, asd)

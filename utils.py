@@ -1,4 +1,5 @@
 
+import math
 import cv2
 from matplotlib import pyplot as plt
 import numpy as np
@@ -47,7 +48,7 @@ def tranform_frames(frames):
     frames = frames.permute(1, 0, 2, 3).unsqueeze(0)
     return frames
 
-def perturbe_frame(frames, pert_matrix, cols, rows, width, height, asd):
+def perturbe_frame(frames, pert_matrix, cols, rows, width, height):
     cell_width = width // cols
     cell_height = height // rows
 
@@ -71,8 +72,8 @@ def perturbe_frame(frames, pert_matrix, cols, rows, width, height, asd):
 def heat_map_over_img(matrix_coeff, height, width, rows, cols):
     # Resize the matrix to the size of the image
     heatmap = np.zeros((height, width)) 
-    step_row = height // rows
-    step_col = width // cols
+    step_row = math.ceil(height / rows)
+    step_col = math.ceil(width / cols)
     for idx_row, row in enumerate(range(0, height, step_row)):
         for idx_col, col in enumerate(range(0, width, step_col)):
             value = matrix_coeff[idx_row*cols + idx_col] 
