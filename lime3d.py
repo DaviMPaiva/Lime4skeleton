@@ -6,6 +6,7 @@ import cv2
 from matplotlib import pyplot as plt
 import numpy as np
 import torch
+from tqdm import tqdm
 
 from utils import heat_map_over_img, perturbe_frame, preprocess_video
 from torchvision.models.video import r3d_18, R3D_18_Weights
@@ -14,8 +15,8 @@ from sklearn.linear_model import LinearRegression
 
 rows, cols = 5, 5
 num_matrix = 30
-video_path = r'videos\sport.mp4'
-desired_action = 308
+video_path = r'videos\golf.mp4'
+desired_action = 141
 
 # Load the pretrained model
 model = r3d_18(weights=R3D_18_Weights.DEFAULT)
@@ -24,7 +25,7 @@ model.eval()
 all_matrixs = []
 for _ in range(num_matrix):
     pert_matrixs = []
-    for matrix in range(16):
+    for matrix in range(300):
         matrix_buffer = []
         for i in range(rows):
             line_buffer = []
@@ -37,7 +38,7 @@ for _ in range(num_matrix):
 raw_frames, width, height, real_width, real_height = preprocess_video(video_path)
 preds = []
 desired_action_scores = []
-for asd, pert in enumerate(all_matrixs):
+for asd, pert in tqdm(enumerate(all_matrixs)):
     pert_frames = perturbe_frame(raw_frames, pert, cols, rows, width, height, asd)
     #make inference o pert video
     # Perform inference
@@ -68,7 +69,7 @@ coeff = (coeff - np.min(coeff)) / (np.max(coeff) - np.min(coeff))
 
 heat_maps = []
 #make heat map for each coeficient matrix
-for coef_idx in range(0, len(coeff), rows*cols):
+for coef_idx in tqdm(range(0, len(coeff), rows*cols)):
     coeff_matrix = coeff[coef_idx : coef_idx + rows*cols]
     heat_maps.append(heat_map_over_img(coeff_matrix, real_height, real_width, rows, cols))
 
@@ -77,7 +78,7 @@ fourcc = cv2.VideoWriter_fourcc(*'XVID')
 out = cv2.VideoWriter('output_video.mp4', fourcc, 20.0, (real_width, real_height))
 
 # Load the video
-cap = cv2.VideoCapture(r'videos\sport.mp4')
+cap = cv2.VideoCapture(video_path)
 
 cell_width = width // cols
 cell_height = height // rows
@@ -94,7 +95,7 @@ while cap.isOpened() and idx < len(heat_maps):
 
     # Write the frame to the output video
     out.write(overlay)
-    cv2.imwrite(f"aqui_o{idx}.jpg", overlay)
+    #cv2.imwrite(f"aqui_o{idx}.jpg", overlay)
 
 # Release everything when done
 cap.release()

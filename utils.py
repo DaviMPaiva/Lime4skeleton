@@ -6,7 +6,7 @@ import torch
 import torchvision.transforms as transforms
 from matplotlib.colors import LinearSegmentedColormap
 
-def preprocess_video(video_path, num_frames=16):
+def preprocess_video(video_path, num_frames=300):
     cap = cv2.VideoCapture(video_path)
     frames = []
 
@@ -75,8 +75,17 @@ def heat_map_over_img(matrix_coeff, height, width, rows, cols):
     step_col = width // cols
     for idx_row, row in enumerate(range(0, height, step_row)):
         for idx_col, col in enumerate(range(0, width, step_col)):
-            heatmap[row:row+step_row, col:col+step_col] = matrix_coeff[idx_row*cols + idx_col]
+            value = matrix_coeff[idx_row*cols + idx_col] 
+            heatmap[row:row+step_row, col:col+step_col] = value if value > 0.8 else 0
 
+    # Create a custom colormap (low values red, high values green)
+    colors = [(1, 0, 0), (1, 1, 0), (0, 1, 0)]  # Red -> Yellow -> Green
+    n_bins = 100  # Discretize the colormap into 100 bins
+    cmap_name = 'red_yellow_green'
+    cmap = LinearSegmentedColormap.from_list(cmap_name, colors, N=n_bins)
+
+    # Apply colormap
+    heatmap_colored = cmap(heatmap)[:, :, :3]  # Apply the colormap
     # Convert the normalized heatmap to a color map
     heatmap_colored = plt.cm.jet(heatmap)[:, :, :3]  # Use the 'jet' colormap
 

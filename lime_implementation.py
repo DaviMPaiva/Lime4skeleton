@@ -10,7 +10,7 @@ model = r3d_18(weights=R3D_18_Weights.DEFAULT)
 model.eval()
 
 # Function to preprocess the input video
-def preprocess_video(video_path, num_frames=16):
+def preprocess_video(video_path, num_frames=300):
     cap = cv2.VideoCapture(video_path)
     frames = []
     
@@ -46,7 +46,7 @@ def preprocess_video(video_path, num_frames=16):
     return frames
 
 # Load and preprocess the input video
-video_path = r"videos\sport.mp4"
+video_path = r"videos\guitar.mp4"
 input_frames = preprocess_video(video_path)
 
 # Perform inference

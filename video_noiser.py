@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 
 # Load the video
-cap = cv2.VideoCapture('videos\sport.mp4')
+cap = cv2.VideoCapture('videos\cards.mp4')
 
 # Get the width and height of the frames
 width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
