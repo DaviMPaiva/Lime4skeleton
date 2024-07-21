@@ -81,7 +81,7 @@ class VideoPerturbationAnalyzer:
 
     def _create_output_video(self, heat_maps, real_width, real_height, video_path):
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        out = cv2.VideoWriter(self.output_folder, fourcc, 2.0, (real_width, real_height))
+        out = cv2.VideoWriter(self.output_folder, fourcc, 10.0, (real_width, real_height))
         cap = cv2.VideoCapture(video_path)
 
         idx = 0

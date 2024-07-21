@@ -1,12 +1,11 @@
 import torch
 from lime_3d.lime_3d import VideoPerturbationAnalyzer
-from torchvision.models.video import r3d_18, R3D_18_Weights
+from torchvision.models.video import swin3d_t, Swin3D_T_Weights
 import torchvision.transforms as transforms
 import numpy as np
 
-
-rows, cols = 7, 7
-num_matrix = 4
+rows, cols = 3, 3
+num_matrix = 10
 video_path = r'videos\riding.mp4'
 desired_action = 274
 
@@ -16,8 +15,9 @@ def tranform_frames(frames):
     # Transform the video frames
     transform = transforms.Compose([
         transforms.ToPILImage(),
+        transforms.Resize((224, 224)),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.45, 0.45, 0.45], std=[0.225, 0.225, 0.225]),
+        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
     ])
     
     frames = [transform(frame) for frame in frames]
@@ -33,8 +33,9 @@ def predict_fn(video):
     return torch.nn.functional.softmax(outputs, dim=1).cpu().numpy()
 
 # Load the pretrained model
-model = r3d_18(weights=R3D_18_Weights.DEFAULT)
+model = swin3d_t(weights=Swin3D_T_Weights.DEFAULT)
 model.eval()
+
 # Example usage:
 analyzer = VideoPerturbationAnalyzer('out_video.mp4', num_matrix, rows, cols)
 analyzer.explain_instance(model_function=predict_fn,

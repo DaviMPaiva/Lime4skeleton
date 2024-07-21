@@ -53,26 +53,23 @@ def perturbe_frame(frames, pert_matrix, tranform_frames_function, cols, rows, wi
 
 def heat_map_over_img(matrix_coeff, height, width, rows, cols):
     # Resize the matrix to the size of the image
+    percentile = np.percentile(matrix_coeff, 99)
     heatmap = np.zeros((height, width)) 
     step_row = math.ceil(height / rows)
     step_col = math.ceil(width / cols)
     for idx_row, row in enumerate(range(0, height, step_row)):
         for idx_col, col in enumerate(range(0, width, step_col)):
             value = matrix_coeff[idx_row*cols + idx_col] 
-            heatmap[row:row+step_row, col:col+step_col] = value if value > 0.8 else 0
+            heatmap[row:row+step_row, col:col+step_col] = value if value > percentile else 0
 
-    # Create a custom colormap (low values red, high values green)
-    colors = [(1, 0, 0), (1, 1, 0), (0, 1, 0)]  # Red -> Yellow -> Green
-    n_bins = 100  # Discretize the colormap into 100 bins
-    cmap_name = 'red_yellow_green'
-    cmap = LinearSegmentedColormap.from_list(cmap_name, colors, N=n_bins)
 
-    # Apply colormap
-    heatmap_colored = cmap(heatmap)[:, :, :3]  # Apply the colormap
-    # Convert the normalized heatmap to a color map
-    heatmap_colored = plt.cm.jet(heatmap)[:, :, :3]  # Use the 'jet' colormap
+    # Normalize the heatmap to the range [0, 255]
+    heatmap_normalized = cv2.normalize(heatmap, None, 0, 255, cv2.NORM_MINMAX)
 
-    # Convert to uint8
-    heatmap_colored = np.uint8(255 * heatmap_colored)
+    # Convert the heatmap to uint8
+    heatmap_uint8 = heatmap_normalized.astype(np.uint8)
 
-    return heatmap_colored
+    # If the frame is RGB, convert heatmap to 3 channels
+    heatmap_color = cv2.applyColorMap(heatmap_uint8, cv2.COLORMAP_JET)
+
+    return heatmap_color

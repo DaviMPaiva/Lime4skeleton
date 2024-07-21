@@ -46,7 +46,7 @@ def preprocess_video(video_path, num_frames=300):
     return frames
 
 # Load and preprocess the input video
-video_path = r"videos\guitar.mp4"
+video_path = r"videos\riding.mp4"
 input_frames = preprocess_video(video_path)
 
 # Perform inference
