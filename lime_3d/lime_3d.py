@@ -15,10 +15,11 @@ class VideoPerturbationAnalyzer:
         self.output_folder = output_folder
         self.simple_model = LinearRegression()
 
-    def explain_instance(self, model_function, desired_action, video_path):
+    def explain_instance(self, model_function, tranform_frames_function, desired_action, video_path):
         all_matrices = self._generate_perturbed_matrices()
         raw_frames, width, height, real_width, real_height = self._preprocess_video(video_path)
-        X_dataset, Y_dataset = self._generate_dataset(model_function, desired_action, all_matrices, raw_frames, width, height)
+        X_dataset, Y_dataset = self._generate_dataset(model_function, tranform_frames_function, desired_action, 
+                                                      all_matrices, raw_frames, width, height)
         coeff = self._train_model(X_dataset, Y_dataset)
         heat_maps = self._generate_heatmaps(coeff, real_height, real_width)
         self._create_output_video(heat_maps, real_width, real_height, video_path)
@@ -40,10 +41,12 @@ class VideoPerturbationAnalyzer:
     def _preprocess_video(self, video_path):
         return preprocess_video(video_path)
 
-    def _generate_dataset(self, model_function, desired_action, all_matrices, raw_frames, width, height):
+    def _generate_dataset(self, model_function, tranform_frames_function, 
+                          desired_action, all_matrices, raw_frames, width, height):
         desired_action_scores = []
         for pert in tqdm(all_matrices):
-            pert_frames = perturbe_frame(raw_frames, pert, self.cols, self.rows, width, height)
+            pert_frames = perturbe_frame(raw_frames, pert, tranform_frames_function, 
+                                         self.cols, self.rows, width, height)
             confidence_scores = model_function(pert_frames)
             desired_action_score = confidence_scores[0][desired_action]
             desired_action_scores.append(desired_action_score)

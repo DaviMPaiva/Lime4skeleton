@@ -4,7 +4,6 @@ import cv2
 from matplotlib import pyplot as plt
 import numpy as np
 import torch
-import torchvision.transforms as transforms
 from matplotlib.colors import LinearSegmentedColormap
 
 def preprocess_video(video_path, num_frames=300):
@@ -31,24 +30,7 @@ def preprocess_video(video_path, num_frames=300):
     
     return frames, 112, 112, real_width, real_height
 
-def tranform_frames(frames):
-    frames = np.array(frames)
-    
-    # Transform the video frames
-    transform = transforms.Compose([
-        transforms.ToPILImage(),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.45, 0.45, 0.45], std=[0.225, 0.225, 0.225]),
-    ])
-    
-    frames = [transform(frame) for frame in frames]
-    frames = torch.stack(frames)
-    
-    # Reshape to (B, C, T, H, W) format
-    frames = frames.permute(1, 0, 2, 3).unsqueeze(0)
-    return frames
-
-def perturbe_frame(frames, pert_matrix, cols, rows, width, height):
+def perturbe_frame(frames, pert_matrix, tranform_frames_function, cols, rows, width, height):
     cell_width = width // cols
     cell_height = height // rows
 
@@ -67,7 +49,7 @@ def perturbe_frame(frames, pert_matrix, cols, rows, width, height):
         pert_frames.append(frame_buf)
         #cv2.imwrite(f"aqui_o{asd}_{idx}.jpg", frame_buf)
 
-    return tranform_frames(pert_frames)
+    return tranform_frames_function(pert_frames)
 
 def heat_map_over_img(matrix_coeff, height, width, rows, cols):
     # Resize the matrix to the size of the image
