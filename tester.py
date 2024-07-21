@@ -1,12 +1,12 @@
 import torch
-from lime_3d import VideoPerturbationAnalyzer
+from lime_3d.lime_3d import VideoPerturbationAnalyzer
 from torchvision.models.video import r3d_18, R3D_18_Weights
 
 
-rows, cols = 5, 5
-num_matrix = 30
+rows, cols = 7, 7
+num_matrix = 4
 video_path = r'videos\riding.mp4'
-desired_action = 273
+desired_action = 274
 
 def predict_fn(video):
     with torch.no_grad():
@@ -19,5 +19,5 @@ model.eval()
 # Example usage:
 analyzer = VideoPerturbationAnalyzer('out_video.mp4', num_matrix, rows, cols)
 analyzer.explain_instance(model_function=predict_fn,
-                          desired_action=141,
+                          desired_action=desired_action,
                           video_path=video_path)

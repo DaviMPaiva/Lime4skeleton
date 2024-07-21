@@ -2,3 +2,4 @@ UCF11_updated_mpg/*
 .venv/
 videos/*
 __pycache__
+*.mp4

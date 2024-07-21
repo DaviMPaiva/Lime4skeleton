@@ -5,7 +5,7 @@ import cv2
 from sklearn.linear_model import LinearRegression
 from tqdm import tqdm
 
-from utils import heat_map_over_img, perturbe_frame, preprocess_video
+from lime_3d.utils import heat_map_over_img, perturbe_frame, preprocess_video
 
 class VideoPerturbationAnalyzer:
     def __init__(self, output_folder, num_matrix, rows, cols):
@@ -78,7 +78,7 @@ class VideoPerturbationAnalyzer:
 
     def _create_output_video(self, heat_maps, real_width, real_height, video_path):
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        out = cv2.VideoWriter(self.output_folder, fourcc, 20.0, (real_width, real_height))
+        out = cv2.VideoWriter(self.output_folder, fourcc, 2.0, (real_width, real_height))
         cap = cv2.VideoCapture(video_path)
 
         idx = 0
