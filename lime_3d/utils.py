@@ -37,6 +37,7 @@ def perturbe_frame(frames, pert_matrix, tranform_frames_function, cols, rows, wi
     pert_frames = []
     for idx, frame in enumerate(frames):
         frame_buf = frame.copy()
+        avg_color = np.mean(frame_buf, axis=(0, 1)).astype(int)
         for i in range(cols):
             for j in range(rows):
                 if pert_matrix[idx][i][j]:
@@ -44,7 +45,7 @@ def perturbe_frame(frames, pert_matrix, tranform_frames_function, cols, rows, wi
                     start_y = i * cell_height
                     end_x = start_x + cell_width
                     end_y = start_y + cell_height
-                    frame_buf[start_y:end_y, start_x:end_x] = 0  # Make the cell black
+                    frame_buf[start_y:end_y, start_x:end_x] = avg_color  
 
         pert_frames.append(frame_buf)
         #cv2.imwrite(f"aqui_o{asd}_{idx}.jpg", frame_buf)
@@ -53,7 +54,7 @@ def perturbe_frame(frames, pert_matrix, tranform_frames_function, cols, rows, wi
 
 def heat_map_over_img(matrix_coeff, height, width, rows, cols):
     # Resize the matrix to the size of the image
-    percentile = np.percentile(matrix_coeff, 99)
+    percentile = np.percentile(matrix_coeff, 98)
     heatmap = np.zeros((height, width)) 
     step_row = math.ceil(height / rows)
     step_col = math.ceil(width / cols)
