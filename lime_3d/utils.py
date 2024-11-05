@@ -18,8 +18,6 @@ def preprocess_video(video_path, num_frames=300):
         if not ret:
             break
         
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        frame = cv2.resize(frame, (112, 112))
         frames.append(frame)
     
     cap.release()
@@ -28,9 +26,9 @@ def preprocess_video(video_path, num_frames=300):
     if len(frames) < num_frames:
         frames = frames + [frames[-1]] * (num_frames - len(frames))
     
-    return frames, 112, 112, real_width, real_height
+    return frames, real_width, real_height
 
-def perturbe_frame(frames, pert_matrix, tranform_frames_function, cols, rows, width, height):
+def perturbe_frame(frames, pert_matrix, cols, rows, width, height):
     cell_width = width // cols
     cell_height = height // rows
 
@@ -45,32 +43,71 @@ def perturbe_frame(frames, pert_matrix, tranform_frames_function, cols, rows, wi
                     start_y = i * cell_height
                     end_x = start_x + cell_width
                     end_y = start_y + cell_height
-                    frame_buf[start_y:end_y, start_x:end_x] = avg_color  
+                    frame_buf[start_y:end_y, start_x:end_x] = (0,0,0)  
 
         pert_frames.append(frame_buf)
         #cv2.imwrite(f"aqui_o{asd}_{idx}.jpg", frame_buf)
 
-    return tranform_frames_function(pert_frames)
+    return pert_frames
 
-def heat_map_over_img(matrix_coeff, height, width, rows, cols):
-    # Resize the matrix to the size of the image
-    percentile = np.percentile(matrix_coeff, 98)
+def heat_map_over_video(raw_frames, matrix_coeff, height, width, rows, cols):
     heatmap = np.zeros((height, width)) 
-    step_row = math.ceil(height / rows)
-    step_col = math.ceil(width / cols)
-    for idx_row, row in enumerate(range(0, height, step_row)):
-        for idx_col, col in enumerate(range(0, width, step_col)):
-            value = matrix_coeff[idx_row*cols + idx_col] 
-            heatmap[row:row+step_row, col:col+step_col] = value if value > percentile else 0
+    cell_row_size = height // rows
+    cell_col_size = width // cols
+    normalized_heatmaps = []
+    global_min = min(heatmap for heatmap in matrix_coeff)
+    global_max = max(heatmap for heatmap in matrix_coeff)
 
+    for idx in range(len(raw_frames)):
+        # Resize the matrix to the size of the image
+        for i in range(rows):
+            for j in range(cols):
+                idx_coeff = int(idx/100)
+                value = matrix_coeff[i + j*cols + idx_coeff*cols*rows] 
+                heatmap[cell_row_size*i : (cell_row_size*i)+cell_row_size, 
+                        cell_col_size*j : (cell_col_size*j)+cell_col_size] = value 
 
-    # Normalize the heatmap to the range [0, 255]
-    heatmap_normalized = cv2.normalize(heatmap, None, 0, 255, cv2.NORM_MINMAX)
+        # Normalize the heatmap to the range [0, 255] based on global min and max
+        # heatmap_normalized = cv2.normalize(heatmap, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+        heatmap_normalized = ((heatmap - global_min) / (global_max - global_min)) * 255
+        heatmap_uint8 = heatmap_normalized.astype(np.uint8)
 
-    # Convert the heatmap to uint8
-    heatmap_uint8 = heatmap_normalized.astype(np.uint8)
+        # Apply color map if needed
+        heatmap_color = cv2.applyColorMap(heatmap_uint8, cv2.COLORMAP_JET)
+        normalized_heatmaps.append(heatmap_color)
 
-    # If the frame is RGB, convert heatmap to 3 channels
-    heatmap_color = cv2.applyColorMap(heatmap_uint8, cv2.COLORMAP_JET)
+    return normalized_heatmaps
 
-    return heatmap_color
+def proof_of_concept_video(raw_frames, matrix_coeff, height, width, rows, cols, threshold, video_path):
+    cell_width = width // cols
+    cell_height = height // rows
+
+    cap = cv2.VideoCapture(video_path)
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    out = cv2.VideoWriter('output_folder.mp4', fourcc, 10.0, (width, height))
+
+    pert_frames = []
+    for idx in range(len(raw_frames)):
+        ret, frame = cap.read()
+        if not ret:
+            break
+        frame_buf = frame.copy()
+        avg_color = np.mean(frame_buf, axis=(0, 1)).astype(int)
+        frame_buf = cv2.resize(frame_buf, (width, height))
+        for i in range(cols):
+            for j in range(rows):
+                idx_coeff = int(idx/100)
+                if matrix_coeff[i + j*cols + idx_coeff*cols*rows] < threshold:
+                    start_x = j * cell_width
+                    start_y = i * cell_height
+                    end_x = start_x + cell_width
+                    end_y = start_y + cell_height
+                    frame_buf[start_y:end_y, start_x:end_x] = (0,0,0)  
+
+        pert_frames.append(frame_buf)
+        out.write(frame_buf)
+        # cv2.imwrite(f"frames/aqui_o_{idx}.jpg", frame_buf)
+    out.release()
+    cap.release()
+
+    return pert_frames

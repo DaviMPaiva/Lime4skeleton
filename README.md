@@ -9,5 +9,6 @@ conda install pytorch==2.5.0 torchvision==0.20.0 torchaudio==2.5.0 pytorch-cuda=
 pip install matplotlib
 tqdm
 sklearn
+pip install opencv-python
 e outros
 ```
