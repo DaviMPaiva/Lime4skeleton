@@ -35,7 +35,6 @@ def perturbe_frame(frames, pert_matrix, cols, rows, width, height):
     pert_frames = []
     for idx, frame in enumerate(frames):
         frame_buf = frame.copy()
-        avg_color = np.mean(frame_buf, axis=(0, 1)).astype(int)
         for i in range(cols):
             for j in range(rows):
                 if pert_matrix[idx][i][j]:
@@ -78,36 +77,35 @@ def heat_map_over_video(raw_frames, matrix_coeff, height, width, rows, cols):
 
     return normalized_heatmaps
 
-def proof_of_concept_video(raw_frames, matrix_coeff, height, width, rows, cols, threshold, video_path):
-    cell_width = width // cols
-    cell_height = height // rows
+def proof_of_concept_video(raw_frames, coeff, percentile, masks, masks_activation, segments, video_path):
 
-    cap = cv2.VideoCapture(video_path)
+    threshold = 1.5
+    final_mask = np.zeros_like(segments, dtype=bool)
+    for idx, value in enumerate(coeff):
+        print(value < threshold * segments[segments == idx].mean())
+        if value < percentile:
+            final_mask |= (segments == idx)
+
+    # frames_3d = np.stack(raw_frames, axis=0) 
+    # pertubated_video = frames_3d.copy()  # Make a copy to preserve the original data
+    # pertubated_video[final_mask] = [0, 0, 0]
+
+    # Stack frames to create a 3D array
+    frames_3d = np.stack(raw_frames, axis=0)
+    pertubated_video = frames_3d.copy()  # Make a copy to preserve the original data
+
+    # Define the darkening factor (e.g., 0.5 will make it 50% darker)
+    darkening_factor = 0.2
+
+    # Apply the darkening effect to the regions defined by `final_mask`
+    pertubated_video[final_mask] = (pertubated_video[final_mask] * darkening_factor).astype(np.uint8)
+
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWriter('output_folder.mp4', fourcc, 10.0, (width, height))
-
+    frame_height, frame_width = raw_frames[0].shape[:2]
+    out = cv2.VideoWriter(video_path, fourcc, 10.0, (frame_width, frame_height))
     pert_frames = []
-    for idx in range(len(raw_frames)):
-        ret, frame = cap.read()
-        if not ret:
-            break
-        frame_buf = frame.copy()
-        avg_color = np.mean(frame_buf, axis=(0, 1)).astype(int)
-        frame_buf = cv2.resize(frame_buf, (width, height))
-        for i in range(cols):
-            for j in range(rows):
-                idx_coeff = int(idx/100)
-                if matrix_coeff[i + j*cols + idx_coeff*cols*rows] < threshold:
-                    start_x = j * cell_width
-                    start_y = i * cell_height
-                    end_x = start_x + cell_width
-                    end_y = start_y + cell_height
-                    frame_buf[start_y:end_y, start_x:end_x] = (0,0,0)  
-
-        pert_frames.append(frame_buf)
-        out.write(frame_buf)
-        # cv2.imwrite(f"frames/aqui_o_{idx}.jpg", frame_buf)
+    for pertubated_frame in pertubated_video:
+        out.write(pertubated_frame)
     out.release()
-    cap.release()
 
     return pert_frames

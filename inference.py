@@ -1,9 +1,13 @@
+import os
+import shutil
 import torch
 import torchvision.transforms as transforms
 from torchvision.models.video import r3d_18
 import cv2
 import numpy as np
 from torchvision.models.video import swin3d_t, Swin3D_T_Weights
+
+from tqdm import tqdm
 
 from lime_3d.utils import preprocess_video
 from tester import predict_fn
@@ -13,7 +17,7 @@ model = swin3d_t(weights=Swin3D_T_Weights.DEFAULT)
 model.eval()
 
 # Load and preprocess the input video
-video_path = r"selected_videos\-Cfav7t1B3I_000002_000012.mp4"
+video_path = r"high_confidence_videos\-QlSUFX-xok_000000_000010_19,bench pressing.mp4"
 frames, _ ,_ = preprocess_video(video_path)
 _, outputs = predict_fn(frames)
 
@@ -32,3 +36,4 @@ for i in range(top_scores.size(1)):
     action_label = kinetics_labels[top_labels[0, i].item() + 1]
     confidence = top_scores[0, i].item()
     print(f"Action: {action_label}, Confidence: {confidence:.4f}")
+
