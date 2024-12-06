@@ -32,7 +32,7 @@ def predict_fn(frames):
     with torch.no_grad():
         outputs = model(frames)
     scores = torch.nn.functional.softmax(outputs, dim=1).cpu().numpy()
-    return scores[0][desired_action], scores
+    return scores[0][desired_action]
 
 # Load the pretrained model
 model = swin3d_t(weights=Swin3D_T_Weights.DEFAULT)
