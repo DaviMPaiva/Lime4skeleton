@@ -3,3 +3,4 @@ UCF11_updated_mpg/*
 videos/*
 __pycache__
 *.mp4
+*.pth

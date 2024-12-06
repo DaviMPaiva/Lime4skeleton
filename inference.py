@@ -17,8 +17,8 @@ model = swin3d_t(weights=Swin3D_T_Weights.DEFAULT)
 model.eval()
 
 # Load and preprocess the input video
-video_path = r"high_confidence_videos\-QlSUFX-xok_000000_000010_19,bench pressing.mp4"
-frames, _ ,_ = preprocess_video(video_path)
+video_path = r""
+frames = preprocess_video(video_path)
 _, outputs = predict_fn(frames)
 
 top_scores, top_labels = torch.topk(torch.from_numpy(outputs), 5, dim=1)

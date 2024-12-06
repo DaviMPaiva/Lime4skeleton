@@ -18,18 +18,16 @@ class VideoPerturbationAnalyzer:
     def explain_instance(self, model_function, video_path, num_matrix, output_folder):
         self.output_folder = output_folder
         self.num_matrix = num_matrix
-        raw_frames, real_width, real_height = self._preprocess_video(video_path)
+        raw_frames = self._preprocess_video(video_path)
         masks, masks_activation, segments = self._generate_repeted_perturbed_matrices(raw_frames)
-        X_dataset, Y_dataset = self._generate_dataset(model_function, raw_frames, masks, masks_activation)
-        coeff = self._train_model(X_dataset, Y_dataset)
-        # heat_maps = self._generate_heatmaps(raw_frames, coeff, real_height, real_width)
+        X_dataset, Y_dataset, weights = self._generate_dataset(model_function, raw_frames, masks, masks_activation)
+        coeff = self._train_model(X_dataset, Y_dataset, weights)
         self._create_proof_of_concept_video(raw_frames, coeff, masks, masks_activation, segments)
-        # self._create_output_video(heat_maps, real_width, real_height, video_path)
 
     def _generate_repeted_perturbed_matrices(self, raw_frames):
         frames_3d = np.stack(raw_frames, axis=0) 
         print("segmenting img")
-        segments = segmentation.slic(frames_3d, n_segments=20, compactness=20)
+        segments = segmentation.slic(frames_3d, n_segments=20, compactness=10)
 
         cluster_size = len(np.unique(segments))
         all_masks = []
@@ -56,44 +54,35 @@ class VideoPerturbationAnalyzer:
         base_confidence_score, _ = model_function(raw_frames)
         print(base_confidence_score)
         frames_3d = np.stack(raw_frames, axis=0) 
+        distances = []
         for mask in tqdm(masks):
             pertubated_video = frames_3d.copy()  # Make a copy to preserve the original data
             pertubated_video[mask] = [0, 0, 0]
-            # pert_frames = perturbe_frame(raw_frames, pert, self.cols, self.rows, width, height)
             confidence_score, _ = model_function(pertubated_video)
             print(confidence_score)
+            distance = sklearn.metrics.pairwise_distances(
+                    pertubated_video.reshape(1,-1), frames_3d.reshape(1,-1),metric='cosine'
+                ).ravel()
+            distances.append(distance)
             desired_action_scores.append(confidence_score)
 
         Y_dataset = desired_action_scores
         X_dataset = mask_activation
-        # # Transformar o tensor PyTorch em um array numpy
-        # pert_frames_np = np.array(crude_pert_frames_list).reshape(len(crude_pert_frames_list), -1)
 
-        # # Transformar a lista raw_frames em um array numpy
-        # raw_frames_np = np.array(raw_frames).reshape(1, -1)
-
-        # # Calcular a distância de cosseno
-        # distances = sklearn.metrics.pairwise_distances(pert_frames_np, raw_frames_np, metric='cosine').ravel()
-        # kernel_width = 0.25
-        # weights = np.sqrt(np.exp(-(distances**2)/kernel_width**2)) #Kernel function
-        # weights.shape
-        return X_dataset, Y_dataset
+        distances = np.squeeze(np.array(distances))
+        #try to undestand this:
+        kernel_width = 0.25
+        weights = np.sqrt(np.exp(-(distances**2)/kernel_width**2)) #Kernel function
+        weights.shape
+        return X_dataset, Y_dataset, weights
     
-    def _train_model(self, X, y):
-        # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-        # self.simple_model.fit(X=X_train, y=y_train)
-        # y_pred = self.simple_model.predict(X_test)
-        # mae = mean_absolute_error(y_test, y_pred)
-        # print("Mean Absolute Error (MAE):", mae)
-
-        self.simple_model.fit(X=X,y=y)
+    def _train_model(self, X, y, weights):
+        self.simple_model.fit(X=X,y=y, sample_weight=weights)
         coeff = self.simple_model.coef_
         values = (coeff - np.min(coeff)) / (np.max(coeff) - np.min(coeff))
         return values
 
     def _flatten_matrix(self, matrix_dect):
-        # [i for matrix in matrix_dect for line in matrix for i in line]
         flattened_list = []
         for matrix_idx in range(0, len(matrix_dect), 100) :
             for line in matrix_dect[matrix_idx]:

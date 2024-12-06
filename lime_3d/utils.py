@@ -26,7 +26,7 @@ def preprocess_video(video_path, num_frames=300):
     if len(frames) < num_frames:
         frames = frames + [frames[-1]] * (num_frames - len(frames))
     
-    return frames, real_width, real_height
+    return frames
 
 def perturbe_frame(frames, pert_matrix, cols, rows, width, height):
     cell_width = width // cols
@@ -82,7 +82,6 @@ def proof_of_concept_video(raw_frames, coeff, percentile, masks, masks_activatio
     threshold = 1.5
     final_mask = np.zeros_like(segments, dtype=bool)
     for idx, value in enumerate(coeff):
-        print(value < threshold * segments[segments == idx].mean())
         if value < percentile:
             final_mask |= (segments == idx)
 
@@ -95,10 +94,10 @@ def proof_of_concept_video(raw_frames, coeff, percentile, masks, masks_activatio
     pertubated_video = frames_3d.copy()  # Make a copy to preserve the original data
 
     # Define the darkening factor (e.g., 0.5 will make it 50% darker)
-    darkening_factor = 0.2
+    darkening_factor = 0.0
 
     # Apply the darkening effect to the regions defined by `final_mask`
-    pertubated_video[final_mask] = (pertubated_video[final_mask] * darkening_factor).astype(np.uint8)
+    pertubated_video[final_mask] = (pertubated_video[final_mask ] * darkening_factor).astype(np.uint8)
 
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
     frame_height, frame_width = raw_frames[0].shape[:2]

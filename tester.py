@@ -6,8 +6,8 @@ import numpy as np
 
 rows, cols = 5, 5
 num_matrix = 20
-video_path = r"high_confidence_videos\-QlSUFX-xok_000000_000010_19,bench pressing.mp4"
-desired_action = 19
+video_path = r""
+desired_action = 
 
 def predict_fn(frames):
     
@@ -42,4 +42,4 @@ if __name__ == '__main__':
     # Example usage:
     analyzer = VideoPerturbationAnalyzer()
     analyzer.explain_instance(model_function=predict_fn, video_path=video_path,
-                              num_matrix=num_matrix, output_folder="output_folder8.mp4")
+                              num_matrix=num_matrix, output_folder="output.mp4")
