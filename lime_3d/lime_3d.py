@@ -51,14 +51,14 @@ class VideoPerturbationAnalyzer:
 
     def _generate_dataset(self, model_function, raw_frames, masks, mask_activation):
         desired_action_scores = []
-        base_confidence_score, _ = model_function(raw_frames)
+        base_confidence_score = model_function(raw_frames)
         print(base_confidence_score)
         frames_3d = np.stack(raw_frames, axis=0) 
         distances = []
         for mask in tqdm(masks):
             pertubated_video = frames_3d.copy()  # Make a copy to preserve the original data
             pertubated_video[mask] = [0, 0, 0]
-            confidence_score, _ = model_function(pertubated_video)
+            confidence_score = model_function(pertubated_video)
             print(confidence_score)
             distance = sklearn.metrics.pairwise_distances(
                     pertubated_video.reshape(1,-1), frames_3d.reshape(1,-1),metric='cosine'
