@@ -1,4 +1,4 @@
-# 🎥 REVEX: Removal-Based Video Explainability 🚀
+# 🎥 LIME4VIDEO 🚀
 This repository contains the implementation of REVEX, based on the paper "REVEX: A Unified Framework for Removal-Based Explainable Artificial Intelligence in Video".
 
 If you've ever used LIME to explain predictions for images or text, think of REVEX as LIME for videos! 🎉 It helps you understand how your model makes decisions on video data by perturbing parts of the input and analyzing the effects.
